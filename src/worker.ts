@@ -9,6 +9,49 @@ interface Env {
   ASSETS: {
     fetch: typeof fetch;
   };
+  TELEGRAM_BOT_TOKEN?: string;
+  TELEGRAM_CHAT_ID?: string;
+}
+
+async function sendTelegramNotification(appointment: any, botToken?: string, chatId?: string) {
+  if (!botToken || !chatId) {
+    console.log("Notificaciones de Telegram no configuradas (TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID faltantes).");
+    return;
+  }
+
+  // Formatear fecha: YYYY-MM-DD -> DD/MM/YYYY
+  const [year, month, day] = appointment.date.split("-");
+  const formattedDate = `${day}/${month}/${year}`;
+
+  const message = `🩺 *¡Nueva Cita Dermatológica!*
+
+👤 *Paciente:* ${appointment.patientName}
+📅 *F. Nacimiento:* ${appointment.patientDob}
+📞 *Teléfono:* ${appointment.patientPhone}
+📆 *Fecha de Cita:* ${formattedDate}
+🕒 *Hora:* ${appointment.time}`;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "Markdown",
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Error al enviar notificación a Telegram:", await response.text());
+    } else {
+      console.log("Notificación de Telegram enviada con éxito.");
+    }
+  } catch (error) {
+    console.error("Error al enviar notificación de Telegram:", error);
+  }
 }
 
 export default {
@@ -54,6 +97,15 @@ export default {
           existing.push(appointment);
 
           await env.DERM_STORE.put("appointments", JSON.stringify(existing));
+
+          // Enviar notificación por Telegram de forma asíncrona usando ctx.waitUntil
+          if (ctx && typeof ctx.waitUntil === 'function') {
+            ctx.waitUntil(sendTelegramNotification(appointment, env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID));
+          } else {
+            sendTelegramNotification(appointment, env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID).catch(err => {
+              console.error("Error asíncrono en worker sendTelegramNotification:", err);
+            });
+          }
 
           return new Response(JSON.stringify({ success: true, appointment }), {
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
