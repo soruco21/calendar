@@ -13,15 +13,41 @@ interface Env {
   TELEGRAM_CHAT_ID?: string;
 }
 
+function formatSpanishDate(dateStr: string): string {
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // 0-indexed
+    const day = parseInt(parts[2], 10);
+    
+    const date = new Date(Date.UTC(year, month, day));
+    
+    const months = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    
+    const days = [
+      'domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'
+    ];
+    
+    const dayName = days[date.getUTCDay()];
+    const monthName = months[date.getUTCMonth()];
+    
+    return `${day} de ${monthName} de ${year} (${dayName})`;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
 async function sendTelegramNotification(appointment: any, botToken?: string, chatId?: string) {
   if (!botToken || !chatId) {
     console.log("Notificaciones de Telegram no configuradas (TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID faltantes).");
     return;
   }
 
-  // Formatear fecha: YYYY-MM-DD -> DD/MM/YYYY
-  const [year, month, day] = appointment.date.split("-");
-  const formattedDate = `${day}/${month}/${year}`;
+  const formattedDate = formatSpanishDate(appointment.date);
 
   const message = `🩺 *¡Nueva Cita Dermatológica!*
 
