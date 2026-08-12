@@ -1,0 +1,13 @@
+# Configuration for Cloudflare Pages with KV bindings
+name = "agendatucita-dockarol"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+main = "src/worker.ts"
+
+[assets]
+directory = "./dist"
+
+[[kv_namespaces]]
+binding = "DERM_STORE"
+# Replace with your actual Cloudflare KV Namespace ID
+id = "f6282256e23a4af9b68feed42ecf5717"
