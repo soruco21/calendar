@@ -10,4 +10,4 @@ directory = "./dist"
 [[kv_namespaces]]
 binding = "DERM_STORE"
 # Replace with your actual Cloudflare KV Namespace ID
-id = "f6282256e23a4af9b68feed42ecf5717"
+id = "65d9d98d3ad3488991aa4b67d94130d8"
